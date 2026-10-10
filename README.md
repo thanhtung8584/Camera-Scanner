@@ -1,4 +1,4 @@
-# Camera Scanner v7.0 – Scan hợp đồng
+# Camera Scanner v7.1 – Scan hợp đồng
 
 Kế thừa repository quoctrungkg/Camera-Scanner, commit 42fc58dc495b5b9f40fc8efeb36947a414ad2369.
 
@@ -28,3 +28,17 @@ Kế thừa repository quoctrungkg/Camera-Scanner, commit 42fc58dc495b5b9f40fc8e
 
 ## Kiểm thử
 Xem QA.md. Cần thử bổ sung trên điện thoại thật với hợp đồng có chữ nhỏ, dấu đỏ và chữ ký trước khi dùng chính thức.
+
+## Đóng và quay về ứng dụng (v7.1)
+- Nút “Đóng · Về trang chủ” tắt camera và đóng tab do ứng dụng mở. Tab ứng dụng bên dưới vẫn giữ nguyên trạng thái đăng nhập.
+- Có ảnh sẽ hỏi xác nhận trước khi thoát; ảnh chưa tải PDF sẽ mất khi đóng tab.
+- Khi trình duyệt không cho đóng tab, dùng URL trang chủ dự phòng. Trong scanner.js, điền đường dẫn HTTPS trang chủ vào HOME_URL (hiện để trống vì chưa có URL chính xác).
+- Hoặc app PDF truyền URL khi mở camera:
+
+```js
+const scanUrl = new URL('https://quoctrungkg.github.io/Camera-Scanner/');
+scanUrl.searchParams.set('returnUrl', HOME_APP_URL); // URL /exec của trang chủ
+window.open(scanUrl.href, '_blank', 'noopener');
+```
+
+- Nếu chưa cấu hình URL và trình duyệt chặn đóng, ứng dụng báo đã tắt camera và hướng dẫn đóng tab; không tự đoán URL trang chủ.

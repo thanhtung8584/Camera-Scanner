@@ -1,13 +1,13 @@
 'use strict';
 const $=id=>document.getElementById(id);
-let stream=null,pages=[],previewIndex=0,busy=false,cameraGeneration=0;
+let stream=null,pages=[],previewIndex=0,busy=false,cameraGeneration=0,exiting=false;
 const LIMIT=2400,QUALITY=.80;
 const msg=t=>$('status').textContent=t;
 const yieldUI=()=>new Promise(r=>setTimeout(r,0));
 function stamp(){const d=new Date(),z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}_${z(d.getHours())}${z(d.getMinutes())}${z(d.getSeconds())}`}
 function suggestedName(){const name=$('docName').value.trim().replace(/[\\/:*?"<>|\u0000-\u001f]/g,'_').slice(0,100)||'Hop_dong';return stamp()+'_'+name+'.pdf'}
 function updateName(){$('filePreview').textContent=suggestedName()}
-function setBusy(v){busy=v;for(const id of ['shot','pdfBtn','clearBtn','rotateImg','deleteImg','files','mode'])$(id).disabled=v}
+function setBusy(v){busy=v;for(const id of ['exitBtn','shot','pdfBtn','clearBtn','rotateImg','deleteImg','files','mode'])$(id).disabled=v}
 function canvas(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c}
 function jpeg(c,q=QUALITY){return new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(Error('Không thể nén ảnh.')),'image/jpeg',q))}
 async function loadImage(blob){const url=URL.createObjectURL(blob),im=new Image();try{im.src=url;await im.decode();return im}finally{URL.revokeObjectURL(url)}}
@@ -32,4 +32,28 @@ async function rotateCurrent(){if(busy||!pages.length)return;setBusy(true);try{c
 $('files').onchange=async e=>{if(busy)return;setBusy(true);const files=[...e.target.files],mode=$('mode').value;try{for(let i=0;i<files.length;i++){const f=files[i];if(!f.type.startsWith('image/'))continue;msg(`Đang scan ảnh ${i+1} / ${files.length}…`);try{const im=await loadImage(f),p=await makePage(im,im.naturalWidth,im.naturalHeight,mode);pages.push(p);addThumb(p);im.src=''}catch(err){msg('Không đọc được '+f.name+'. Hãy dùng ảnh JPEG/PNG.');await yieldUI()}}msg('Đã thêm ảnh — '+pages.length+' trang.')}finally{e.target.value='';setBusy(false)}};
 $('pdfBtn').onclick=async()=>{if(busy)return;if(!pages.length){msg('Chưa có trang nào.');return}setBusy(true);stopCamera();try{if(!window.jspdf)throw Error('Chưa tải được thư viện PDF. Kiểm tra mạng và tải lại trang.');const {jsPDF}=window.jspdf;let pdf;for(let i=0;i<pages.length;i++){msg(`Đang tạo PDF: ${i+1} / ${pages.length}…`);const p=pages[i],landscape=p.width>p.height,w=landscape?297:210,h=landscape?210:297;if(!pdf)pdf=new jsPDF({orientation:landscape?'l':'p',unit:'mm',format:'a4',compress:true});else pdf.addPage('a4',landscape?'l':'p');const r=Math.min(w/p.width,h/p.height),iw=p.width*r,ih=p.height*r;pdf.addImage(new Uint8Array(await p.blob.arrayBuffer()),'JPEG',(w-iw)/2,(h-ih)/2,iw,ih);await yieldUI()}const blob=pdf.output('blob'),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=suggestedName();document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);msg('Đã tạo PDF '+(blob.size/1048576).toFixed(1)+' MB và gửi lệnh tải về máy.')}catch(e){msg('Không tạo được PDF: '+e.message)}finally{setBusy(false)}};
 $('shot').onclick=capture;$('cameraBtn').onclick=startCamera;$('doneBtn').onclick=()=>{stopCamera();msg('Đã dừng camera. Kiểm tra các trang và tải PDF.')};$('clearBtn').onclick=()=>{if(!busy&&confirm('Xóa toàn bộ ảnh?')){closePreview();pages.forEach(dispose);pages=[];$('thumbs').replaceChildren();updateCounts();msg('Đã xóa phiên scan.')}};$('closePreview').onclick=closePreview;$('prevImg').onclick=()=>openPreview((previewIndex-1+pages.length)%pages.length);$('nextImg').onclick=()=>openPreview((previewIndex+1)%pages.length);$('rotateImg').onclick=rotateCurrent;$('deleteImg').onclick=()=>removePage(previewIndex);$('docName').oninput=updateName;
-window.addEventListener('pagehide',stopCamera);document.addEventListener('visibilitychange',()=>{if(document.hidden)stopCamera()});window.addEventListener('beforeunload',e=>{if(pages.length){e.preventDefault();e.returnValue=''}});updateName();startCamera();
+
+// Set this to the application's homepage URL for direct visits.
+const HOME_URL = '';
+function homeUrl(){
+  const value=new URLSearchParams(location.search).get('returnUrl')||HOME_URL;
+  if(!value)return null;
+  try{const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password?u.href:null}catch{return null}
+}
+function exitScanner(){
+  if(busy)return;
+  if(pages.length&&!confirm('Đóng phiên chụp và về trang chủ? Hãy tải PDF trước. Ảnh trong phiên này sẽ không được lưu.'))return;
+  stopCamera();closePreview();exiting=true;
+  // Browser-created tabs can close even when opened with noopener.
+  if(window.opener&&!window.opener.closed){try{window.opener.focus()}catch{}}
+  if(window.top===window)window.close();
+  setTimeout(()=>{
+    const home=homeUrl();
+    if(home){location.replace(home);return}
+    exiting=false;
+    msg('Đã tắt camera. Hãy đóng tab này để quay về ứng dụng. Nếu mở trực tiếp, cần cấu hình đường dẫn trang chủ.');
+  },200);
+}
+$('exitBtn').onclick=exitScanner;
+
+window.addEventListener('pagehide',stopCamera);document.addEventListener('visibilitychange',()=>{if(document.hidden)stopCamera()});window.addEventListener('beforeunload',e=>{if(pages.length&&!exiting){e.preventDefault();e.returnValue=''}});updateName();startCamera();

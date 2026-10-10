@@ -16,3 +16,8 @@ Checklist trên điện thoại:
 3. Thêm ảnh độ phân giải cao, kiểm tra cạnh dài không quá 2400 px và bộ đếm dung lượng.
 4. Xoay/xóa trang, kiểm tra PDF đủ trang và đúng thứ tự.
 5. Chuyển ứng dụng và quay lại, mở lại camera.
+
+## v7.1
+- node --check scanner.js: PASS.
+- Mô phỏng nút thoát: đóng tab, URL dự phòng, hủy xác nhận, chặn khi đang xử lý: PASS.
+- Chưa kiểm tra camera/đóng tab trên điện thoại thật hoặc Apps Script thực tế.
