@@ -1,10 +1,30 @@
-# Camera Scanner - GitHub Pages
-1. Tạo repository GitHub mới, ví dụ `camera-scanner`.
-2. Upload `index.html` trong thư mục này vào root repository.
-3. Settings > Pages > Deploy from a branch > `main` / `(root)` > Save.
-4. Lấy URL HTTPS dạng `https://TEN_GITHUB.github.io/camera-scanner/`.
-5. Mở `Code.gs`, thay `PASTE_GITHUB_PAGES_URL_HERE` trong `SCANNER_PAGE_URL` bằng URL đó.
-6. Apps Script: Deploy > Manage deployments > Edit > New version > Deploy. Web app phải cho phép người dùng của hệ thống truy cập.
-7. Mở hệ thống > Công cụ hỗ trợ > Chụp liên tục.
+# Camera Scanner v7.0 – Scan hợp đồng
 
-Scanner nhận một token tải lên tạm thời (30 phút) do Apps Script tạo khi người dùng đã đăng nhập. PDF được ghép trên trình duyệt rồi POST một lần về Apps Script để lưu Drive.
+Kế thừa repository quoctrungkg/Camera-Scanner, commit 42fc58dc495b5b9f40fc8efeb36947a414ad2369.
+
+## Cập nhật GitHub Pages
+1. Giải nén ZIP.
+2. Chép index.html, scanner.js và cả thư mục vendor vào thư mục gốc repository Camera-Scanner. Thay index.html cũ; giữ các file mới đúng vị trí.
+3. Commit lên nhánh đang dùng GitHub Pages. Chờ deployment hoàn tất rồi tải lại trang.
+4. Mở trực tiếp URL HTTPS trên Chrome/Safari, cấp quyền camera.
+
+## Sử dụng
+- Mặc định Scan sáng – giữ màu dấu, chữ ký. Chế độ áp dụng cho ảnh chụp hoặc thêm vào sau khi chọn.
+- Chạm nút tròn để chụp liên tục; camera vẫn mở sau mỗi lần chụp.
+- Hoàn tất dừng camera; không tự chạy OCR. Tên PDF gồm ngày giờ và tên tài liệu tự nhập.
+- Xem ảnh, xoay, xóa; kéo thả để đổi thứ tự trên trình duyệt hỗ trợ kéo thả.
+- Tạo PDF tải về máy, không lưu Drive. Xuất PDF dừng camera để giảm tải; Mở lại camera để tiếp tục.
+- Chuyển sang ứng dụng khác sẽ dừng camera. Khi quay lại bấm Mở lại camera.
+
+## Xử lý ảnh
+- Camera yêu cầu 2560 × 1920; độ phân giải thực tế do thiết bị quyết định.
+- Giới hạn cạnh dài 2400 px, không phóng to ảnh nhỏ; JPEG chất lượng 0.80.
+- Ước lượng nền giấy theo vùng, nâng sáng nhẹ và tăng tương phản; không ép đen trắng để giữ nét mảnh và màu dấu.
+- Ảnh tải lên cũng được xử lý và nén. Dữ liệu giữ dạng Blob, thumbnail nhỏ; chỉ thêm thumbnail mới sau khi chụp.
+- PDF A4 chứa ảnh scan; không phải PDF có chữ tìm kiếm.
+- Không tự nhận diện mép giấy/chỉnh phối cảnh; cần đặt giấy thẳng và chiếm phần lớn khung hình. Không thể khôi phục chữ bị nhòe hoặc mất nét.
+- Không lưu phiên sau khi đóng/tải lại trang. Tải PDF trước khi thoát. Bộ nhớ điện thoại vẫn giới hạn số trang.
+- jsPDF 2.5.2 đi kèm trong vendor, không cần tải thư viện từ CDN khi mở ứng dụng.
+
+## Kiểm thử
+Xem QA.md. Cần thử bổ sung trên điện thoại thật với hợp đồng có chữ nhỏ, dấu đỏ và chữ ký trước khi dùng chính thức.
